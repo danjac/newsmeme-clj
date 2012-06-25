@@ -1,23 +1,17 @@
 
-*.coverage
-*.egg-info
 *.log
-*.pyc
 *.db
 *.swp
 *.swo
 *.zip
 *.orig
 *.cfg
-*.tox
 
 *~
 
-fab_settings.py
-production_settings.py
 
 dist
-docs/output
+lib
 
 _uploads
 
