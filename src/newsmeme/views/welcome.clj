@@ -7,16 +7,13 @@
         [hiccup.page-helpers]))
 
 
-(defn get-users []
-  (db/select models/user
-             (db/fields :username :email)))
+(defn get-top-posts []
+  (db/select models/post))
 
-(defpartial show-user [{:keys [username email]}] 
-            [:div username " (" 
-                  (link-to (str "mailto:" email) email) ")"])
-
+(defpartial show-post [post]
+            [:li [:h3 (post :title)]])
 
 (defpage "/" []
-         (common/layout
-           [:p "Welcome to newsmeme"]
-           (map show-user (get-users))))
+         (common/layout "newsmeme"
+           [:ul.posts 
+            (map show-post (get-top-posts))]))
