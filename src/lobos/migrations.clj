@@ -51,3 +51,14 @@
                                     (text :votes))))
               (down [] (drop (table :comments))))
 
+(defmigration add-tags-table
+              (up [] (create defaultdb
+                             (table :tags
+                                    (integer :id :primary-key :auto-inc)
+                                    (varchar :slug 80 :unique :not-null)))
+                      (create defaultdb
+                             (table :post_tags
+                                    (integer :post_id [:refer :posts :id] :not-null)
+                                    (integer :tag_id [:refer :tags :id] :not-null))))
+              (down [] (drop (table :post_tags))
+                       (drop (table :tags))))
