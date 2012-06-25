@@ -1,7 +1,8 @@
 (ns newsmeme.server
   (:require [noir.server :as server]
             [korma.db :as db])
-  (:use [ring.middleware.anti-forgery :only [wrap-anti-forgery]]))
+  (:use [newsmeme.middleware :only [authenticate]]
+        [ring.middleware.anti-forgery :only [wrap-anti-forgery]]))
 
 (db/defdb default  (db/postgres {:db "newsmeme"
                                  :user "postgres"
@@ -9,7 +10,9 @@
 
 
 (server/load-views "src/newsmeme/views/")
+
 (server/add-middleware wrap-anti-forgery)
+(server/add-middleware authenticate)
 
 (defn -main [& m]
   (let [mode (keyword (or (first m) :dev))

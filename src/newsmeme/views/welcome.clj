@@ -1,6 +1,7 @@
 (ns newsmeme.views.welcome
   (:require [newsmeme.views.common :as common]
             [newsmeme.models :as models]
+            [newsmeme.middleware :as middleware]
             [noir.validation :as vali]
             [noir.response :as resp]
             [noir.session :as session]
@@ -37,9 +38,16 @@
 (defn insert-user [user]
   (db/insert models/user (db/values (select-keys user [:username :email :password]))))
 
+(defn current-user [] middleware/*current-user*)
 
 (defn get-top-posts []
   (db/select models/post))
+
+
+(defn auth-user [login password]
+  (first (db/select models/user (db/where (and (or (= :username login)
+                                                   (= :email login))
+                                               (= :password password))))))
 
 (defpartial show-errors [field]
             (if-let [errors (vali/get-errors field)]
@@ -50,6 +58,7 @@
 (defpartial csrf-field []
             (hidden-field "__anti-forgery-token" (cookies/get "__anti-forgery-token")))
 
+
 (defpartial show-post [post]
             [:li [:h3 (post :title)]])
 
@@ -59,10 +68,33 @@
             (map show-post (get-top-posts))]))
 
 
+(defpage [:post "/login/"] {:keys [login password]}
+         (if-let [user (auth-user login password)]
+           (do
+             (session/put! :user-id (user :id))
+             (session/flash-put! (str "Welcome back, " (user :username)))
+             (resp/redirect "/"))
+            (resp/redirect "/login/")))
+
+
+(defpage "/login/" []
+         (common/layout "Login"
+                        (form-to [:post "/login/"]
+                                 (csrf-field)
+                                 [:ul
+                                    [:li (label :login "Username or email address")
+                                         (text-field :login)]
+                                    [:li (label :password "Password")
+                                         (password-field :password)]
+                                    [:li (submit-button "Login")]])))
+                                    
+
+
 (defpage [:post "/signup/"] {:as user}
          (if (valid-signup? user)
            (do
-             (insert-user user)
+             (let [user-id ((insert-user user) :id)]
+                   (session/put! :user-id user-id))
              (session/flash-put! (str "Welcome to newsmeme, " (user :username)))
              (resp/redirect "/"))
            (render "/signup/" user)))
