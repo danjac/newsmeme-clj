@@ -1,14 +1,54 @@
 (ns newsmeme.views.welcome
   (:require [newsmeme.views.common :as common]
             [newsmeme.models :as models]
+            [noir.validation :as vali]
+            [noir.response :as resp]
+            [noir.session :as session]
+            [noir.cookies :as cookies]
             [korma.core :as db])
   (:use [noir.core]
         [hiccup.core]
-        [hiccup.page-helpers]))
+        [hiccup.page-helpers]
+        [hiccup.form-helpers]))
+
+
+(defn username-exists? [username]
+  (and username (first (db/select models/user (db/where {:username username})))))
+
+(defn email-exists? [email]
+  (and email (first (db/select models/user (db/where {:email email})))))
+
+(defn valid-signup? [{:keys [username email password password-again]}] 
+  (vali/rule (vali/has-value? username)
+             [:username "Username is required"])
+  (vali/rule (not (username-exists? username))
+             [:username "This username is taken"])
+  (vali/rule (vali/is-email? email)
+             [:email "Not a valid email address"]) 
+  (vali/rule (not (email-exists? email))
+             [:email "This email address is taken"])
+  (vali/rule (vali/has-value? password)
+             [:password "Password is required"])
+  (vali/rule (= password password-again)
+             [:password-again "Password does not match"])
+  (not (vali/errors?)))
+
+
+(defn insert-user [user]
+  (db/insert models/user (db/values (select-keys user [:username :email :password]))))
 
 
 (defn get-top-posts []
   (db/select models/post))
+
+(defpartial show-errors [field]
+            (if-let [errors (vali/get-errors field)]
+                     [:ul.errors
+                      (map (fn [error] [:li.error error]) errors)]))
+                      
+
+(defpartial csrf-field []
+            (hidden-field "__anti-forgery-token" (cookies/get "__anti-forgery-token")))
 
 (defpartial show-post [post]
             [:li [:h3 (post :title)]])
@@ -17,3 +57,36 @@
          (common/layout "newsmeme"
            [:ul.posts 
             (map show-post (get-top-posts))]))
+
+
+(defpage [:post "/signup/"] {:as user}
+         (if (valid-signup? user)
+           (do
+             (insert-user user)
+             (session/flash-put! (str "Welcome to newsmeme, " (user :username)))
+             (resp/redirect "/"))
+           (render "/signup/" user)))
+
+(defpage "/signup/" {:as user}
+         (common/layout "Signup to newsmeme"
+            (form-to [:post "/signup/"]
+                     (csrf-field)
+                     [:ul
+                      [:li (show-errors :username)
+                           (label :username "username")
+                           (text-field :username (user :username))]
+                      [:li (show-errors :email) 
+                           (label :email "email address")
+                           (text-field :email (user :email))]
+                      [:li (show-errors :password)
+                           (label :password "password")
+                           (password-field :password)]
+                      [:li (show-errors :password-again)
+                           (label :password-again "password again")
+                           (password-field :password-again)]
+                      [:li (submit-button "signup")]])))
+
+
+                          
+
+
