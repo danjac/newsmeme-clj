@@ -6,6 +6,7 @@
             [noir.response :as resp]
             [noir.session :as session]
             [noir.cookies :as cookies]
+            [noir.util.crypt :as crypt]
             [korma.core :as db])
   (:use [noir.core]
         [hiccup.core]
@@ -36,7 +37,10 @@
 
 
 (defn insert-user [user]
-  (db/insert models/user (db/values (select-keys user [:username :email :password]))))
+  (db/insert models/user (db/values (assoc 
+                                      (select-keys user [:username :email :password]) :password 
+                                        (crypt/encrypt (user :password))))))
+
 
 (defn current-user [] middleware/*current-user*)
 
@@ -44,10 +48,14 @@
   (db/select models/post))
 
 
+
 (defn auth-user [login password]
-  (first (db/select models/user (db/where (and (or (= :username login)
-                                                   (= :email login))
-                                               (= :password password))))))
+  (let [user (first (db/select models/user 
+                               (db/where (or (= :username login)
+                                             (= :email login)))))] user
+    (if (and user (crypt/compare password (user :password))) user)))
+
+    
 
 (defpartial show-errors [field]
             (if-let [errors (vali/get-errors field)]
