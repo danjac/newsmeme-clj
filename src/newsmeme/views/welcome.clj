@@ -1,4 +1,6 @@
 (ns newsmeme.views.welcome
+  (:import [java.net.URL]
+           [java.net.MalformedURLException])
   (:require [newsmeme.views.common :as common]
             [newsmeme.models :as models]
             [noir.validation :as vali]
@@ -14,6 +16,13 @@
         [hiccup.form-helpers]))
 
 
+(defn valid-url? 
+  "Checks if url is valid"
+  [url]
+    (try (new java.net.URL url)
+      (catch java.net.MalformedURLException e)))
+
+
 (defn username-exists? [username]
   (and username (first (db/select models/user (db/where {:username username})))))
 
@@ -25,6 +34,8 @@
              [:title "Title is missing"])
   (vali/rule (vali/has-value? link)
              [:link "Link is missing"])
+  (vali/rule (valid-url? link)
+             [:link "Invalid link"])
   (not (vali/errors?)))
 
 (defn valid-signup? [{:keys [username email password password-again]}] 
