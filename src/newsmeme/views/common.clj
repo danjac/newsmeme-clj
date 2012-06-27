@@ -1,10 +1,36 @@
 (ns newsmeme.views.common
   (:use [noir.core :only [defpartial url-for]]
+        [noir.request :as req]
+        [noir.response :as resp]
+        [noir.validation :as vali]
+        [noir.cookies :as cookies]
         [noir.session :only [flash-get]]
-        [newsmeme.middleware :as middleware]
-        [hiccup.page-helpers :only [link-to include-css include-js html5]]))
+        [newsmeme.models.users :only [current-user]]
+        [hiccup.form-helpers :onlu [hidden-field]]
+        [hiccup.page-helpers :only [link-to 
+                                    url
+                                    include-css 
+                                    include-js 
+                                    html5]]))
 
-(defn current-user [] middleware/*current-user*)
+
+
+(defn login-required []
+  (when-not (current-user)
+    (resp/redirect (url "/login/" {:next-url (:uri (req/ring-request))}))))
+
+
+(defpartial show-errors [field]
+            (if-let [errors (vali/get-errors field)]
+                     [:ul.errors
+                      (map (fn [error] [:li.error error]) errors)]))
+                      
+
+(defpartial csrf-field []
+            (hidden-field "__anti-forgery-token" (cookies/get "__anti-forgery-token")))
+
+
+
 
 (defpartial show-flash []
             ;; show flash message if available

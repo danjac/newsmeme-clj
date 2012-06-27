@@ -1,6 +1,9 @@
 (ns newsmeme.models.users
-  (:require [noir.util.crypt :as crypt])
+  (:require [noir.session :as session]
+            [noir.util.crypt :as crypt])
   (:use [korma.core]))
+
+(declare ^{:dynamic true} *current-user*)
 
 (declare post)
 
@@ -9,10 +12,23 @@
            (table :users)
            (has-many post))
 
+
+(defn get-user [user-id]
+  (first (select user (where {:id user-id}))))
+
+
+(defn session-user []
+    (if-let [user-id (session/get :user-id)]
+      (get-user user-id)))
+
+
+(defn current-user [] *current-user*)
+
 (defn username-exists? 
   "Checks if a user with this username exists in the db"
   [username]
   (and username (first (select user (where {:username username})))))
+
 
 (defn email-exists? 
   "Checks if a user with this email exists in the db"
