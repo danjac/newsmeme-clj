@@ -2,14 +2,13 @@
   (:import [java.net.URL]
            [java.net.MalformedURLException])
   (:require [newsmeme.views.common :as common]
-            [newsmeme.models :as models]
+            [newsmeme.models.posts :as posts]
+            [newsmeme.models.users :as users]
             [noir.validation :as vali]
             [noir.response :as resp]
             [noir.request :as req]
             [noir.session :as session]
-            [noir.cookies :as cookies]
-            [noir.util.crypt :as crypt]
-            [korma.core :as db])
+            [noir.cookies :as cookies])
   (:use [noir.core]
         [hiccup.core]
         [hiccup.page-helpers]
@@ -23,12 +22,6 @@
       (catch java.net.MalformedURLException e)))
 
 
-(defn username-exists? [username]
-  (and username (first (db/select models/user (db/where {:username username})))))
-
-(defn email-exists? [email]
-  (and email (first (db/select models/user (db/where {:email email})))))
-
 (defn valid-post? [{:keys [title link]}]
   (vali/rule (vali/has-value? title)
              [:title "Title is missing"])
@@ -41,11 +34,11 @@
 (defn valid-signup? [{:keys [username email password password-again]}] 
   (vali/rule (vali/has-value? username)
              [:username "Username is required"])
-  (vali/rule (not (username-exists? username))
+  (vali/rule (not (users/username-exists? username))
              [:username "This username is taken"])
   (vali/rule (vali/is-email? email)
              [:email "Not a valid email address"]) 
-  (vali/rule (not (email-exists? email))
+  (vali/rule (not (users/email-exists? email))
              [:email "This email address is taken"])
   (vali/rule (vali/has-value? password)
              [:password "Password is required"])
@@ -53,28 +46,6 @@
              [:password-again "Password does not match"])
   (not (vali/errors?)))
 
-
-(defn insert-user [user]
-  (db/insert models/user (db/values (assoc (select-keys user [:username :email :password]) :password 
-                                        (crypt/encrypt (user :password))))))
-
-
-
-(defn insert-post [post]
-  (db/insert models/post (db/values (assoc (select-keys post [:title :link]) :author_id (session/get :user-id)))))
-
-
-(defn get-top-posts []
-  (db/select models/post (db/order :date_created :DESC)))
-
-
-(defn auth-user [creds password]
-  (let [user (first (db/select models/user 
-                               (db/where (or (= :username creds)
-                                             (= :email creds)))))] user
-    (if (and user (crypt/compare password (user :password))) user)))
-
-    
 (defn login-required []
   (when-not (common/current-user)
     (resp/redirect (url "/login/" {:next-url (:uri (req/ring-request))}))))
@@ -101,12 +72,12 @@
 (defpage "/" []
          (common/layout
            [:ul.posts 
-            (map show-post (get-top-posts))]))
+            (map show-post (posts/get-top-posts))]))
 
 
 (defpage [:post "/submit/"] {:as post}
          (if (valid-post? post)
-           (do (insert-post post)
+           (do (posts/insert-post post)
                (session/flash-put! "Thanks for your post!")
                (resp/redirect "/"))
            (render "/submit/" post)))
@@ -128,7 +99,7 @@
 
              
 (defpage [:post "/login/"] {:keys [creds password next-url]}
-         (if-let [user (auth-user creds password)]
+         (if-let [user (users/auth-user creds password)]
            (do (session/put! :user-id (user :id))
                (session/flash-put! (str "Welcome back, " (user :username)))
                (resp/redirect (or next-url "/")))
@@ -158,11 +129,10 @@
 
 (defpage [:post "/signup/"] {:as user}
          (if (valid-signup? user)
-           (do
-             (let [user-id ((insert-user user) :id)]
-                   (session/put! :user-id user-id))
-             (session/flash-put! (str "Welcome to newsmeme, " (user :username)))
-             (resp/redirect "/"))
+           (do (let [user-id (:id (users/insert-user user))]
+                  (session/put! :user-id user-id))
+                  (session/flash-put! (str "Welcome to newsmeme, " (user :username)))
+                  (resp/redirect "/"))
            (render "/signup/" user)))
 
 (defpage "/signup/" {:as user}
@@ -183,8 +153,3 @@
                            (label :password-again "password again")
                            (password-field :password-again)]
                       [:li (submit-button "signup")]])))
-
-
-                          
-
-
