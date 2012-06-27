@@ -5,6 +5,7 @@
             [newsmeme.models.posts :as posts]
             [newsmeme.models.users :as users]
             [newsmeme.validators :as validators]
+            [newsmeme.utils :as utils]
             [noir.response :as resp]
             [noir.session :as session]
             [noir.cookies :as cookies])
@@ -18,8 +19,12 @@
 (pre-route "/submit/" {} (common/login-required))
 
 
-(defpartial show-post [{:keys [id title link]}]
-            [:li [:h3 (link-to {:target "_blank"} link title)]])
+(defpartial show-post [{:keys [id title link num_comments date_created score username]}]
+            [:li [:h3 (link-to {:target "_blank" :class "public"} link title)
+                      [:span.domain " &rarr; " (utils/domain link)]]
+                 [:p.post-info "Comments " num_comments 
+                               " | Score " score 
+                               " | Posted today by " (link-to "#" username)]])
 
 
 

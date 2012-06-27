@@ -8,7 +8,7 @@
 (defentity post
            (pk :id)
            (table :posts)
-           (belongs-to user)
+           (belongs-to user {:fk :author_id})
            (has-many post-comment)
            (has-many tag))
 
@@ -27,7 +27,7 @@
 
 
 (defn get-top-posts []
-  (select post (order :date_created :DESC)))
+  (select post (with user)(order :date_created :DESC)))
 
 
  
