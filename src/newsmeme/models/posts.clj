@@ -22,6 +22,37 @@
            (belongs-to post)
            (belongs-to tag))
 
+"Tagging functions"
+
+(defn get-or-create-tag 
+  [slug]
+  (if-let [result (first (select tag (where {:slug slug})))]
+    (:id result)
+    (:id (insert tag (values {:slug slug})))))
+
+(defn insert-tagged
+  [post-id tag-id]
+  (insert tagged (values {:post_id post-id :tag_id tag-id})))
+
+(defn add-tags-to-post 
+  [post-id tag-ids]
+  ; delete all tags for this post
+  (delete tagged (where {:post_id post-id}))
+  (map #(insert-tagged post-id %) tag-ids))
+
+(defn tag-ids-from-string
+  [tags]
+  (let [tags (map #((string/lower-case (string/trim %))) (string/split tags #"\s"))]
+       (map #(get-or-create-tag %) tags)))
+
+(defn get-tags-for-post
+  [post-id]
+  (map #(:slug %) 
+          (select tag
+          (join tagged (= :tags.id :post_tags.tag_id))
+          (where {:post_tags.post_id post-id}))))
+
+
 (defn link-exists?
   "Check link already used by another post"
   [link]
@@ -40,47 +71,24 @@
         tag-ids (tag-ids-from-string tags)]
     (doall (add-tags-to-post (:id new-post) tag-ids)) new-post))
 
-(defn get-top-posts []
-  (select post (with user)(order :score :DESC :date_created :DESC)))
+(defn restrict
+  [q]
+  (if-let [user-id (session/get :user-id)]
+    (where q (-> (or (= :access 100)
+                     (= :author_id user-id))))
+    (where q {:access 100})))
 
 
-(defn get-latest-posts []
-  (select post (with user)(order :date_created :DESC)))
+(defn get-top-posts 
+  [] 
+  (select post (with user) (restrict) (order :score :DESC :date_created :DESC)))
+
+(defn get-latest-posts 
+  []
+  (select post (with user) (restrict) (order :date_created :DESC)))
 
 (defn get-post 
   [post-id]
-  (first select post (where {:id post-id})))
-
-"Tagging functions"
-
-(defn get-or-create-tag 
-  [slug]
-  (if-let [result (first (select tag (where {:slug slug})))]
-    (:id result)
-    (:id (insert tag (values {:slug slug})))))
-
-(defn insert-tagged
-  [post-id tag-id]
-  (insert tagged (values {:post_id post-id :tag_id tag-id})))
-
-
-(defn add-tags-to-post 
-  [post-id tag-ids]
-  ; delete all tags for this post
-  (delete tagged (where {:post_id post-id}))
-  (map #(insert-tagged post-id %) tag-ids))
-
-(defn tag-ids-from-string
-  [tags]
-  (let [tags (map #(string/trim %) (string/split tags #"\s"))]
-       (map #(get-or-create-tag %) tags)))
-
-(defn get-tags-for-post
-  [post-id]
-  (map #(:slug %) 
-          (select tag
-          (join tagged (= :tags.id :post_tags.tag_id))
-          (where {:post_tags.post_id post-id}))))
-
+  (first (select post (restrict) (where {:id post-id}))))
 
 

@@ -32,6 +32,11 @@
            [:ul.posts 
             (map show-post (posts/get-top-posts))]))
 
+(defpage "/latest/" []
+         (common/layout
+           [:ul.posts 
+            (map show-post (posts/get-latest-posts))]))
+
 
 (defpage [:post "/submit/"] {:as post}
          (if (validators/valid-post? post)
