@@ -42,12 +42,12 @@
   [post-id tag-ids]
   ; delete all tags for this post
   (delete tagged (where {:post_id post-id}))
-  (map #(insert-tagged post-id %1) tag-ids))
+  (map #(insert-tagged post-id %) tag-ids))
 
 (defn tag-ids-from-string
   [tags]
-  (let [tags (map #(string/trim %1) (string/split tags #"\s"))]
-       (map #(get-or-create-tag %1) tags)))
+  (let [tags (map #(string/trim %) (string/split tags #"\s"))]
+       (map #(get-or-create-tag %) tags)))
 
 (defn insert-post 
   "Insert a new post in the database" 
@@ -56,8 +56,9 @@
                          (values {:title title
                                   :link link
                                   :description description
-                                  :author_id (session/get :user-id)}))]
-    (add-tags-to-post (:id new-post) (tag-ids-from-string tags)) new-post))
+                                  :author_id 1}))
+        tag-ids (tag-ids-from-string tags)]
+    (doall (add-tags-to-post (:id new-post) tag-ids)) new-post))
 
 (defn get-top-posts []
   (select post (with user)(order :date_created :DESC)))
