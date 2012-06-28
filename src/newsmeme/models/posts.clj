@@ -47,6 +47,9 @@
 (defn get-latest-posts []
   (select post (with user)(order :date_created :DESC)))
 
+(defn get-post 
+  [post-id]
+  (first select post (where {:id post-id})))
 
 "Tagging functions"
 
