@@ -62,3 +62,8 @@
                                     (integer :tag_id [:refer :tags :id] :not-null))))
               (down [] (drop (table :post_tags))
                        (drop (table :tags))))
+
+
+(defmigration add-description-to-posts
+              (up [] (alter :add (table :posts (text :description))))
+              (down [] (alter :drop (table :posts (column :description)))))

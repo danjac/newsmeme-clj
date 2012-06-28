@@ -2,6 +2,7 @@
   (:import [java.net.URL]
            [java.net.MalformedURLException])
   (:require [noir.validation :as vali]
+            [newsmeme.models.posts :as posts]
             [newsmeme.models.users :as users]))
 
 (defn- valid-url? 
@@ -11,17 +12,21 @@
       (catch java.net.MalformedURLException e)))
 
 
-(defn valid-post? [{:keys [title link]}]
+(defn valid-post? 
+  [{:keys [title link]}]
   (vali/rule (vali/has-value? title)
              [:title "Title is missing"])
   (vali/rule (vali/has-value? link)
              [:link "Link is missing"])
   (vali/rule (valid-url? link)
              [:link "Invalid link"])
+  (vali/rule (not (posts/link-exists? link))
+             [:link "This link has been posted already"])
   (not (vali/errors?)))
 
 
-(defn valid-signup? [{:keys [username email password password-again]}] 
+(defn valid-signup? 
+  [{:keys [username email password password-again]}] 
   (vali/rule (vali/has-value? username)
              [:username "Username is required"])
   (vali/rule (not (users/username-exists? username))
