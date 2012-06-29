@@ -42,15 +42,15 @@
 
 (defn tag-ids-from-string
   [tags]
-  (let [tags (map #((string/lower-case (string/trim %))) (string/split tags #"\s"))]
-       (map #(get-or-create-tag %) tags)))
+  (let [tags (filter empty? (map #((string/lower-case (string/trim %))) (string/split tags #"\s")))])
+       (map #(get-or-create-tag %) tags))
 
 (defn get-tags-for-post
   [post-id]
   (map #(:slug %) 
           (select tag
           (join tagged (= :tags.id :post_tags.tag_id))
-          (where {:post_tags.post_id post-id}))))
+          (where {:post_tags.post_id (Integer. post-id)}))))
 
 
 (defn link-exists?
@@ -71,6 +71,7 @@
         tag-ids (tag-ids-from-string tags)]
     (doall (add-tags-to-post (:id new-post) tag-ids)) new-post))
 
+
 (defn restrict
   [q]
   (if-let [user-id (session/get :user-id)]
@@ -89,6 +90,6 @@
 
 (defn get-post 
   [post-id]
-  (first (select post (restrict) (where {:id post-id}))))
+  (first (select post (restrict) (where {:id (Integer. post-id)}))))
 
 

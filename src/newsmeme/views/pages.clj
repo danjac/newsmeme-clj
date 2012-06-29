@@ -17,14 +17,22 @@
 (pre-route "/submit/" {} (common/login-required))
 
 
+(defn post-link
+  [post-id link]
+  (str "/post/" post-id))
+
+
 (defpartial show-post 
             [{:keys [id title link num_comments date_created score username]}]
-            [:li [:h3 (link-to {:target "_blank" :class "public"} link title)
-                      [:span.domain " &rarr; " (utils/domain link)]]
+            [:li [:h3 (link-to {:target "_blank" :class "public"} (post-link id link) title)
+                  (if link [:span.domain " &rarr; " (utils/domain link)])]
                  [:p.post-info "Comments " num_comments 
                                " | Score " score 
                                " | Posted today by " (link-to "#" username)]])
 
+(defpartial show-tag 
+            [tag]
+            [:li (link-to "#" tag)])
 
 
 (defpage "/" []
@@ -37,6 +45,16 @@
            [:ul.posts 
             (map show-post (posts/get-latest-posts))]))
 
+
+
+(defpage "/post/:id" {post-id :id}
+         (if-let [post (posts/get-post post-id)]
+           (let [tags (posts/get-tags-for-post post-id)]
+             (common/layout
+               [:h2 (:title post)]
+               (if tags [:ul.tags (map show-tag tags)])))))
+
+                  
 
 (defpage [:post "/submit/"] {:as post}
          (if (validators/valid-post? post)

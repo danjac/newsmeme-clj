@@ -8,20 +8,21 @@
 (defn- valid-url? 
   "Checks if url is valid"
   [url]
-    (try (new java.net.URL url)
-      (catch java.net.MalformedURLException e)))
+    (if-not url (do (println "ok" true))
+      (try (new java.net.URL url)
+        (catch java.net.MalformedURLException e))))
 
 
 (defn valid-post? 
-  [{:keys [title link]}]
+  [{:keys [title link description]}]
   (vali/rule (vali/has-value? title)
              [:title "Title is missing"])
-  (vali/rule (vali/has-value? link)
-             [:link "Link is missing"])
   (vali/rule (valid-url? link)
              [:link "Invalid link"])
   (vali/rule (not (posts/link-exists? link))
              [:link "This link has been posted already"])
+  (vali/rule (or link description)
+             [:description "Please provide a link or a description"])
   (not (vali/errors?)))
 
 
