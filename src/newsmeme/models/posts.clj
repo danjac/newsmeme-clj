@@ -2,7 +2,7 @@
   (:require [clojure.string :as string]
             [noir.session :as session])
   (:use [korma.core]
-        [newsmeme.models.users :only [user]]))
+        [newsmeme.models.users :only [user current-user friend-ids]]))
 
 (declare tag post-comment)
 
@@ -21,6 +21,18 @@
            (table :post_tags)
            (belongs-to post)
            (belongs-to tag))
+
+
+
+(def access-public 100)
+(def access-friends 200)
+(def access-private 300)
+
+(def access-names {access-public "public"
+                   access-friends "friends"
+                   access-private "private"})
+
+
 
 "Tagging functions"
 
@@ -74,12 +86,15 @@
     (doall (add-tags-to-post (:id new-post) tag-ids)) new-post))
 
 
+   
 (defn restrict
   [q]
-  (if-let [user-id (session/get :user-id)]
-    (where q (-> (or (= :access 100)
-                     (= :author_id user-id))))
-    (where q {:access 100})))
+  (if-let [user (current-user)]
+    (where q (-> (or (= :access access-public)
+                     (= (and (= :access access-friends)
+                             (in :author_id (friend-ids user))))
+                     (= :author_id (:id user)))))
+    (where q {:access access-public})))
 
 
 (defn get-top-posts 
@@ -101,6 +116,6 @@
 
 (defn get-post 
   [post-id]
-  (first (select post (restrict) (where {:id (Integer. post-id)}))))
+  (first (select post (with user) (restrict) (where {:id (Integer. post-id)}))))
 
 

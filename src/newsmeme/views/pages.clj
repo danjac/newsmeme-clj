@@ -19,7 +19,7 @@
 
 (defpartial post-link
   [post-id title link access]
-  (let [attrs {:class "public"}]
+  (let [attrs {:class (get posts/access-names access)}]
     (if (empty? link)
       (link-to attrs (str "/post/" post-id) title)
       (link-to (assoc attrs :target "_blank")  link title))))

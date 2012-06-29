@@ -1,7 +1,9 @@
 (ns newsmeme.models.users
   (:require [noir.session :as session]
+            [clojure.string :as string]
             [noir.util.crypt :as crypt])
-  (:use [korma.core]))
+  (:use [korma.core]
+        [clojure.set :only [intersection]]))
 
 (declare ^{:dynamic true} *current-user*)
 
@@ -50,4 +52,11 @@
                                (where (or (= :username creds)
                                           (= :email creds)))))] authd-user
     (if (and authd-user (crypt/compare password (authd-user :password))) authd-user)))
+
+(defn friend-ids
+  [{:keys [following followers]}]
+  (let [following (string/join following #"\s")
+        followers (string/join followers #"\s")]
+    (intersection following followers)))
+
 
