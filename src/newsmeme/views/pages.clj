@@ -17,16 +17,17 @@
 (pre-route "/submit/" {} (common/login-required))
 
 
-(defn post-link
-  [post-id link]
-  (if (empty? link)
-    (str "/post/" post-id)
-    link))
+(defpartial post-link
+  [post-id title link access]
+  (let [attrs {:class "public"}]
+    (if (empty? link)
+      (link-to attrs (str "/post/" post-id) title)
+      (link-to (assoc attrs :target "_blank")  link title))))
 
 
 (defpartial show-post 
-            [{:keys [id title link num_comments date_created score username]}]
-            [:li [:h3 (link-to {:target "_blank" :class "public"} (post-link id link) title)
+            [{:keys [id title access link num_comments date_created score username]}]
+            [:li [:h3 (post-link id title link access)
                   (if-not (empty? link) [:span.domain " &rarr; " (utils/domain link)])]
                  [:p.post-info "Comments " num_comments 
                                " | Score " score 
