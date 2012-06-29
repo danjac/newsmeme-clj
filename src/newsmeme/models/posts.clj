@@ -56,7 +56,7 @@
 (defn link-exists?
   "Check link already used by another post"
   [link]
-  (and link 
+  (and (not (empty? link)) 
        (first (select post (where {:link link})))))
 
 
