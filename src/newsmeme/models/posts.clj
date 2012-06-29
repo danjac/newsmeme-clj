@@ -42,8 +42,10 @@
 
 (defn tag-ids-from-string
   [tags]
-  (let [tags (filter empty? (map #((string/lower-case (string/trim %))) (string/split tags #"\s")))])
-       (map #(get-or-create-tag %) tags))
+  (let [tags (filter not-empty (map #(string/lower-case 
+                                       (string/trim %)) 
+                                    (string/split tags #"\s")))]
+       (map #(get-or-create-tag %) tags)))
 
 (defn get-tags-for-post
   [post-id]

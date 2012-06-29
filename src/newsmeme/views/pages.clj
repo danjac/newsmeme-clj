@@ -19,13 +19,15 @@
 
 (defn post-link
   [post-id link]
-  (str "/post/" post-id))
+  (if (empty? link)
+    (str "/post/" post-id)
+    link))
 
 
 (defpartial show-post 
             [{:keys [id title link num_comments date_created score username]}]
             [:li [:h3 (link-to {:target "_blank" :class "public"} (post-link id link) title)
-                  (if link [:span.domain " &rarr; " (utils/domain link)])]
+                  (if-not (empty? link) [:span.domain " &rarr; " (utils/domain link)])]
                  [:p.post-info "Comments " num_comments 
                                " | Score " score 
                                " | Posted today by " (link-to "#" username)]])
