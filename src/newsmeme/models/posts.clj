@@ -90,6 +90,15 @@
   []
   (select post (with user) (restrict) (order :date_created :DESC)))
 
+
+(defn get-posts-for-tag
+  [slug]
+  (select post (with user) (restrict) 
+          (join tagged (= :posts.id :post_tags.post_id))
+          (join tag (= :tags.id :post_tags.tag_id))
+          (where {:tags.slug slug}) (order :date_created :DESC)))
+
+
 (defn get-post 
   [post-id]
   (first (select post (restrict) (where {:id (Integer. post-id)}))))

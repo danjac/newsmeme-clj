@@ -34,29 +34,39 @@
 
 (defpartial show-tag 
             [tag]
-            [:li (link-to "#" tag)])
+            [:li (link-to (str "/tag/" tag) tag)])
+
+
+(defpartial show-posts [posts]
+            [:ul.posts
+             (map show-post posts)])
 
 
 (defpage "/" []
-         (common/layout
-           [:ul.posts 
-            (map show-post (posts/get-top-posts))]))
+         (common/layout 
+           [:h2 "Hottest posts"]
+           (show-posts (posts/get-top-posts))))
+
 
 (defpage "/latest/" []
-         (common/layout
-           [:ul.posts 
-            (map show-post (posts/get-latest-posts))]))
+         (common/layout 
+           [:h2 "Latest posts"]
+           (show-posts (posts/get-latest-posts))))
 
 
-
-(defpage "/post/:id" {post-id :id}
+(defpage "/post/:post-id" {:keys [post-id]}
          (if-let [post (posts/get-post post-id)]
            (let [tags (posts/get-tags-for-post post-id)]
              (common/layout
                [:h2 (:title post)]
                (if tags [:ul.tags (map show-tag tags)])))))
 
-                  
+
+(defpage "/tag/:tag" {:keys [tag]}
+         (common/layout
+            [:h2 "Posts tagged '" tag "'"]
+           (show-posts (posts/get-posts-for-tag tag))))
+             
 
 (defpage [:post "/submit/"] {:as post}
          (if (validators/valid-post? post)
