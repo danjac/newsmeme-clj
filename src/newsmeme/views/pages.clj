@@ -4,6 +4,7 @@
             [newsmeme.models.users :as users]
             [newsmeme.validators :as validators]
             [newsmeme.utils :as utils]
+            [clj-time.coerce :as coerce]
             [noir.response :as resp]
             [noir.session :as session]
             [noir.cookies :as cookies])
@@ -19,7 +20,7 @@
 
 (defpartial post-link
   [post-id title link access]
-  (let [attrs {:class (get posts/access-names access)}]
+  (let [attrs {:class (posts/access-name access)}]
     (if (empty? link)
       (link-to attrs (str "/post/" post-id) title)
       (link-to (assoc attrs :target "_blank")  link title))))
@@ -27,11 +28,13 @@
 
 (defpartial show-post 
             [{:keys [id title access link num_comments date_created score username]}]
+            (let [ts (utils/timesince (coerce/from-sql-date date_created))]
             [:li [:h3 (post-link id title link access)
                   (if-not (empty? link) [:span.domain " &rarr; " (utils/domain link)])]
                  [:p.post-info "Comments " num_comments 
                                " | Score " score 
-                               " | Posted today by " (link-to "#" username)]])
+                               " | Posted " (if ts (str ts " ago") "just now")
+                               " by " (link-to "#" username)]]))
 
 (defpartial show-tag 
             [tag]

@@ -33,6 +33,9 @@
                    access-private "private"})
 
 
+(defn access-name [access]
+  (get access-names access))
+
 
 "Tagging functions"
 
@@ -91,8 +94,8 @@
   [q]
   (if-let [user (current-user)]
     (where q (-> (or (= :access access-public)
-                     (= (and (= :access access-friends)
-                             (in :author_id (friend-ids user))))
+                     ;(= (and (= :access access-friends)
+                     ;        (in :author_id (friend-ids user))))
                      (= :author_id (:id user)))))
     (where q {:access access-public})))
 

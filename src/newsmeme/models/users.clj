@@ -55,8 +55,8 @@
 
 (defn friend-ids
   [{:keys [following followers]}]
-  (let [following (string/join following #"\s")
-        followers (string/join followers #"\s")]
+  (let [following (string/join #"\s" following)
+        followers (string/join #"\s" followers)]
     (intersection following followers)))
 
 
