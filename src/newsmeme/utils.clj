@@ -20,7 +20,7 @@
   [dt]
   (let [iv (ct/interval dt (ct/now))]
     (first 
-        (for [ [f s] periods 
+        (for [[f s] periods 
               :let [result (f iv)] 
               :when (> result 1)] 
           (str result " " s)))))

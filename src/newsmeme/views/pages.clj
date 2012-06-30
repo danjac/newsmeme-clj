@@ -29,12 +29,12 @@
 (defpartial show-post 
             [{:keys [id title access link num_comments date_created score username]}]
             (let [ts (utils/timesince (coerce/from-sql-date date_created))]
-            [:li [:h3 (post-link id title link access)
-                  (if-not (empty? link) [:span.domain " &rarr; " (utils/domain link)])]
-                 [:p.post-info "Comments " num_comments 
-                               " | Score " score 
-                               " | Posted " (if ts (str ts " ago") "just now")
-                               " by " (link-to "#" username)]]))
+              [:li [:h3 (post-link id title link access)
+                    (if-not (empty? link) [:span.domain " &rarr; " (utils/domain link)])]
+                   [:p.post-info "Comments " num_comments 
+                                 " | Score " score 
+                                 " | Posted " (if ts (str ts " ago") "just now")
+                                 " by " (link-to "#" username)]]))
 
 (defpartial show-tag 
             [tag]
