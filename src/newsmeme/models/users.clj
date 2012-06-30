@@ -37,6 +37,10 @@
   [email]
   (and email (first (select user (where {:email email})))))
 
+
+(defn reset-activation-key [user-id]
+  "123456")
+
 (defn insert-user 
   "Adds a new user to the db"
   [{:keys [username email password]}]

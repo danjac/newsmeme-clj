@@ -25,6 +25,9 @@
               :when (> result 1)] 
           (str result " " s)))))
 
+
+(defn absolute-url 
+  [url] url)
                                 
 
                

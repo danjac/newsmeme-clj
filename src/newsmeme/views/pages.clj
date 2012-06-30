@@ -156,3 +156,27 @@
                            (label :password-again "password again")
                            (password-field :password-again)]
                       [:li (submit-button "signup")]])))
+
+
+(defpage "/forgotpassdone/" []
+         (common/layout
+           [:p "Please check your email for a link to change your password"]))
+
+(defpage [:post "/forgotpass"] {:keys email}
+         (if-let [user (users/get-user-from-email email)]
+           (do (mail/recover-password email 
+                                      (:user username) 
+                                      (users/reset-activation-key (:id user))
+                                      activation-key)
+                (resp/redirect "/forgotpassdone/"))
+           (render "/forgotpass/")))
+               
+
+(defpage "/forgotpass" []
+         (common/layout
+           [:h2 "Recover your password"]
+           (form-to [:post "/forgotpass/"]
+                    [:ul 
+                     [:li (label :email "email address")
+                          (text-field :email (user :email))]
+                     [:li (submit-button "send")]])))
