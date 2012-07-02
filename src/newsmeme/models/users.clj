@@ -18,6 +18,9 @@
 (defn get-user [user-id]
   (first (select user (where {:id user-id}))))
 
+(defn get-user-from-email [email]
+  (first (select user (where {:email email}))))
+
 
 (defn session-user []
     (if-let [user-id (session/get :user-id)]

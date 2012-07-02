@@ -42,8 +42,10 @@
 
 
 (defpartial show-posts [posts]
+            (if (empty? posts)
+              [:p [:strong "Nothing found here"]]
             [:ul.posts
-             (map show-post posts)])
+             (map show-post posts)]))
 
 
 (defpage "/" []
@@ -57,6 +59,10 @@
            [:h2 "Latest posts"]
            (show-posts (posts/get-latest-posts))))
 
+(defpage "/deadpool/" []
+         (common/layout
+           [:h2 "Deadpool"]
+           (show-posts (posts/get-deadpooled-posts))))
 
 (defpage "/post/:post-id" {:keys [post-id]}
          (if-let [post (posts/get-post post-id)]
@@ -72,6 +78,12 @@
            (show-posts (posts/get-posts-for-tag tag))))
              
 
+(comment
+(defpage "/user/:username" {:keys [username]}
+         (if-let [user (get-user-by-username username)]
+           [:h2 "Posts by " username]
+           (show-posts (posts/get-posts-for-user (:id user)))))
+)
 (defpage [:post "/submit/"] {:as post}
          (if (validators/valid-post? post)
            (do (posts/insert-post post)
@@ -162,21 +174,4 @@
          (common/layout
            [:p "Please check your email for a link to change your password"]))
 
-(defpage [:post "/forgotpass"] {:keys email}
-         (if-let [user (users/get-user-from-email email)]
-           (do (mail/recover-password email 
-                                      (:user username) 
-                                      (users/reset-activation-key (:id user))
-                                      activation-key)
-                (resp/redirect "/forgotpassdone/"))
-           (render "/forgotpass/")))
-               
 
-(defpage "/forgotpass" []
-         (common/layout
-           [:h2 "Recover your password"]
-           (form-to [:post "/forgotpass/"]
-                    [:ul 
-                     [:li (label :email "email address")
-                          (text-field :email (user :email))]
-                     [:li (submit-button "send")]])))
