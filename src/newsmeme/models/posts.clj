@@ -94,36 +94,37 @@
 (defn restrict
   [q]
   (if-let [user (current-user)]
-    (do (println "with user" (:username user))
     (where q (-> (or (= :access access-public)
-                     ;(and (= :access access-friends)
-                     ;        (in :author_id (friend-ids user)))
-                     (= :author_id (:id user))))))
+                     (= :author_id (:id user)))))
     (where q {:access access-public})))
 
 (def select-posts
-  (-> (select* post) (with user) (restrict) (order :date_created :DESC)))
+  (-> (select* post) (with user) (order :date_created :DESC)))
+
+(defn restricted-posts
+  []
+  (-> select-posts (restrict)))
     
 
 (defn get-top-posts 
   [] 
-  (-> select-posts (select)))
+  (-> (restricted-posts) (select)))
 
 (defn get-latest-posts 
   []
-  (-> select-posts (order :score :DESC) (select)))
+  (-> (restricted-posts) (order :score :DESC) (select)))
 
 (defn get-deadpooled-posts
   []
-  (-> select-posts (where (<= :score 0))(select)))
+  (-> (restricted-posts) (where (<= :score 0))(select)))
 
 (defn get-posts-for-user
   [user-id]
-  (-> select-posts (where {:author_id user-id})(select)))
+  (-> (restricted-posts) (where {:author_id user-id})(select)))
 
 (defn get-posts-for-tag
   [slug]
-  (-> select-posts
+  (-> (restricted-posts)
           (join tagged (= :posts.id :post_tags.post_id))
           (join tag (= :tags.id :post_tags.tag_id))
           (where {:tags.slug slug}) (select))) 
@@ -131,6 +132,6 @@
 
 (defn get-post 
   [post-id]
-  (first (-> select-posts (where {:id (Integer. post-id)}) (select))))
+  (first (-> (restricted-posts) (where {:id (Integer. post-id)}) (select))))
 
 

@@ -3,6 +3,7 @@
             [clojure.string :as string]
             [noir.util.crypt :as crypt])
   (:use [korma.core]
+        [newsmeme.utils :as utils]
         [clojure.set :only [intersection]]))
 
 (declare ^{:dynamic true} *current-user*)
@@ -26,8 +27,8 @@
     (if-let [user-id (session/get :user-id)]
       (get-user user-id)))
 
-
 (defn current-user [] *current-user*)
+
 
 (defn username-exists? 
   "Checks if a user with this username exists in the db"

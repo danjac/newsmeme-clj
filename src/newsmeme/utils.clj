@@ -28,16 +28,3 @@
 
 (defn absolute-url 
   [url] url)
-                                
-
-               
-        
-
-
-
-
-      
-    
-  
-
-
