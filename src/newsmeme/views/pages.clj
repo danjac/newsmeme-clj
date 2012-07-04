@@ -17,6 +17,18 @@
 
 (pre-route "/submit/" {} (common/login-required))
 
+(defpartial access-buttons 
+            [access]
+            
+            [:label.checkbox "Public" 
+             (radio-button :access (= access posts/access-public) posts/access-public)]
+            
+            [:label.checkbox "Friends"
+              (radio-button :access (= access posts/access-friends) posts/access-friends)]
+
+            [:label.checkbox "Private"
+              (radio-button :access (= access posts/access-private) posts/access-private)])
+
 
 (defpartial post-link
   [post-id title link access]
@@ -92,6 +104,7 @@
            (render "/submit/" post)))
 
 
+
 (defpage "/submit/" {:as post} 
          (common/layout
            [:h2 "Submit a post"]
@@ -107,6 +120,9 @@
                      [:li (common/show-errors :tags)
                           (label :tags "Tags")
                           (text-field :tags (:tags post))]
+                     [:li (common/show-errors :access)
+                          (label :access "Access level")
+                          (access-buttons (Integer. (or (:access post) posts/access-public)))]
                      [:li (common/show-errors :description)
                           (label :description "Description")
                           (text-area :description (:description post))]

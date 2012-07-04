@@ -66,4 +66,8 @@
         followers (string/join #"\s" followers)]
     (intersection following followers)))
 
+(defn get-user-by-username
+  [username]
+  (first (select user (where {:username username}))))
+
 

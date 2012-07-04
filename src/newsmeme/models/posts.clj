@@ -79,11 +79,12 @@
 
 (defn insert-post 
   "Insert a new post in the database" 
-  [{:keys [title link description tags]}]
+  [{:keys [title link description access tags]}]
   (let [new-post (insert post 
                          (values {:title title
                                   :link link
                                   :description description
+                                  :access (Integer. access)
                                   :author_id 1}))
         tag-ids (tag-ids-from-string tags)]
     (doall (add-tags-to-post (:id new-post) tag-ids)) new-post))
@@ -93,10 +94,11 @@
 (defn restrict
   [q]
   (if-let [user (current-user)]
+    (do (println "with user" (:username user))
     (where q (-> (or (= :access access-public)
                      ;(and (= :access access-friends)
                      ;        (in :author_id (friend-ids user)))
-                     (= :author_id (:id user)))))
+                     (= :author_id (:id user))))))
     (where q {:access access-public})))
 
 (def select-posts
